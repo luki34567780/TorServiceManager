@@ -36,30 +36,43 @@ namespace TorServiceManager
 
         public void Start()
         {
-            var info = new ProcessStartInfo(TorExecutablePath, TorProcessArguments);
-            info.UseShellExecute = false;
-            info.RedirectStandardOutput = true;
-            info.RedirectStandardError = true;
-            info.CreateNoWindow = true;
-            info.WorkingDirectory = TorFolderPath;
+            var info = new ProcessStartInfo(TorExecutablePath, TorProcessArguments)
+            {
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WorkingDirectory = TorFolderPath
+            };
 
-            TorProcess = new Process();
-            TorProcess.StartInfo = info;
-            TorProcess.ErrorDataReceived += (_, e) => TorProcessOutput.Enqueue(e.Data);
-            TorProcess.OutputDataReceived += (_, e) => TorProcessOutput.Enqueue(e.Data);
+            TorProcess = new Process
+            {
+                StartInfo = info
+            };
+
+            TorProcess.ErrorDataReceived += TorProcess_DataReceived;
+            TorProcess.OutputDataReceived += TorProcess_DataReceived;
             TorProcess.Start();
+            TorProcess.BeginOutputReadLine();
+            TorProcess.BeginErrorReadLine();
         }
+
+        private void TorProcess_DataReceived(object sender, DataReceivedEventArgs e)
+        {
+            TorProcessOutput.Enqueue(e.Data);
+        }
+        
 
         public void Stop()
         {
-            TorProcess.Kill();
+            TorProcess?.Kill();
         }
 
         private static string GetRandomStringFileSafe(int length)
         {
             var sb = new StringBuilder();
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 sb.Append((char)Random.Shared.Next(Constants.RandomStringFileSafeStart, Constants.RandomStringFileSafeEnd));
             }
@@ -67,7 +80,7 @@ namespace TorServiceManager
             return sb.ToString();
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             TorProcess?.Dispose();
         }

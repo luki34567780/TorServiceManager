@@ -13,13 +13,21 @@ namespace test
             var path = manager.TorFolderPath + "\\hostname";
             Thread.Sleep(1000);
             Console.WriteLine(File.ReadAllText(path));
-            while (true)
-            {
-                if (manager.TorProcess.StandardError.Peek() > 0)
-                    Console.Write(manager.TorProcess.StandardError.ReadToEnd());
 
-                if (manager.TorProcess.StandardOutput.Peek() > 0)
-                    Console.Write(manager.TorProcess.StandardOutput.ReadToEnd());
+            try
+            {
+                while (true)
+                {
+                    if (manager.TorProcessOutput.TryDequeue(out var output))
+                    {
+                        Console.WriteLine(output);
+                    }
+                }
+            }
+            finally
+            {
+                manager.Stop();
+                manager.Dispose();
             }
         }
     }
