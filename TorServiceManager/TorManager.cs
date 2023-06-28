@@ -23,13 +23,23 @@ namespace TorServiceManager
             
             Directory.CreateDirectory(TorFolderPath);
 
-            Torrc = torrc ?? Constants.DefaultTorrc.Replace(Constants.HiddenServiceDirReplaceConstant, TorFolderPath);
+            Torrc = torrc ?? Constants.DefaultTorrc;
+            Torrc = Torrc.Replace(Constants.HiddenServiceDirReplaceConstant, TorFolderPath);
+
             TorExecutablePath = $"{TorFolderPath}/tor.exe";
             TorConfigPath = $"{TorFolderPath}/config.torrc";
             TorProcessArguments = $" -f \"{TorConfigPath}\"";
 
             File.WriteAllBytes(TorExecutablePath, GetTor());
             File.WriteAllText(TorConfigPath, Torrc);
+        }
+
+        public async Task<string> GetUrl()
+        {
+            while (!File.Exists($"{TorFolderPath}/hostname"))
+                await Task.Delay(100);
+
+            return await File.ReadAllTextAsync($"{TorFolderPath}/hostname");
         }
 
         public static string GetTorrcServiceLine(int port, string ip) => $"HiddenServicePort {port} {ip}:{port}";
